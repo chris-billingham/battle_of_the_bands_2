@@ -3,22 +3,24 @@ library(rvest)
 library(lubridate)
 library(polite)
 
-# so this works
-# it's needs polite-ing
-
+# set up our dates
 start_date <- ymd("1994-01-02")
 end_date <- ymd("1995-08-13")
 dates <- seq.Date(start_date, end_date, "week")
 
+# lets bow to the official charts website as i am a polite web scraper
+chart_bow <- bow("https://www.officialcharts.com/")
+
+# set up the scrape function
 scrape_chart <- function(date_of_chart) {
   # convert date into character for url
   date <- gsub("-", "", as.character(date_of_chart))
   
-  # create scrape url
-  url <- paste0("https://www.officialcharts.com/charts/singles-chart/", date, "/7501/")
+  # nod for the url of the date
+  session <- nod(chart_bow, path = paste0("charts/singles-chart/", date, "/7501/"))
 
   # scrape the chart table and remove some google tag rubbish
-  df_raw <- read_html(url) %>% 
+  df_raw <- scrape(session) %>%
     html_node("table.chart-positions") %>% 
     html_table(header = TRUE) %>% 
     select(1:5) %>%
@@ -34,17 +36,16 @@ scrape_chart <- function(date_of_chart) {
   # split Title, Artist into title, artist and label based on gaps of 2 or more spaces
   df_final <- df_data %>% 
     separate(`Title, Artist`, into = c("title", "artist", "label"), sep = "( ){2,}") %>%
-    mutate(date_of_chart = ymd(str_extract(url, "[0-9]{8}")))
+    mutate(date_of_chart = ymd(str_extract(session$url, "[0-9]{8}")))
 
   # return that
   return(df_final)
 }
 
 # run the function through all the weeks
-df_all <- map_dfr(dates, scrape_chart) %>%
+charts_all <- map_dfr(dates, scrape_chart) %>%
   mutate(Pos = as.integer(Pos),
          PeakPos = as.integer(PeakPos),
          WoC = as.integer(WoC))
 
 # seems they did top 100 from first week in feb 94 so will need to truncate at that
-
