@@ -26,4 +26,4 @@ new_lyrics <- map2_dfr(charts_new_binned$artist,
                        charts_new_binned$title, 
                        lyrics_possible, 
                        info = "all")
-
+# crap! more than half missing.
