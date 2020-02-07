@@ -49,3 +49,27 @@ charts_all <- map_dfr(dates, scrape_chart) %>%
          WoC = as.integer(WoC))
 
 # seems they did top 100 from first week in feb 94 so will need to truncate at that
+
+# how many new entries do we have?
+charts_all %>% 
+  filter(LW == 'New') %>% 
+  filter(Pos <= 40) %>%
+  group_by(Pos) %>% 
+  summarise(n = n()) %>% 
+  ungroup %>%
+  ggplot(aes(x = Pos, y = n)) +
+    geom_col()
+
+# hmm not much volume in the top 10, might need to group for targets
+charts_new_binned <- charts_all %>%
+  filter(LW == 'New') %>% 
+  mutate(bin = cut(Pos, c(1, 5, 10, 15, 20, 25, 30, 35 ,40, Inf), include.lowest = TRUE))
+
+# let's visualise that (getting rid of the out of top 40s)
+charts_new_binned %>%
+  filter(Pos <= 40) %>%
+  group_by(bin) %>% 
+  summarise(n = n()) %>% 
+  ungroup %>%
+  ggplot(aes(x = bin, y = n)) +
+  geom_col()
