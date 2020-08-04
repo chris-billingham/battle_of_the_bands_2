@@ -1,6 +1,7 @@
 library(tidyverse)
 library(rvest)
 library(lubridate)
+library(glue)
 library(polite)
 
 # set up our dates
@@ -14,24 +15,22 @@ chart_bow <- bow("https://www.officialcharts.com/")
 # set up the scrape function
 scrape_chart <- function(date_of_chart) {
   # convert date into character for url
-  date <- gsub("-", "", as.character(date_of_chart))
+  date <- str_replace_all(as.character(date_of_chart), "-", "")
   
   # nod for the url of the date
-  session <- nod(chart_bow, path = paste0("charts/singles-chart/", date, "/7501/"))
+  session <- nod(chart_bow, path = glue("charts/singles-chart/{date}/7501/"))
 
   # scrape the chart table and remove some google tag rubbish
   df_raw <- scrape(session) %>%
     html_node("table.chart-positions") %>% 
     html_table(header = TRUE) %>% 
     select(1:5) %>%
-    filter(!grepl("google", `Title, Artist`))
+    filter(str_detect(`Title, Artist`, "google", negate = TRUE))
 
-  # we need every 5th row for the data
-  rows <- seq(1, nrow(df_raw), by = 5)
-
-  # get rid of some escaped characters
-  df_data <- df_raw[rows,] %>%
-    mutate(`Title, Artist` = gsub("\n", "", `Title, Artist`))
+  # we need every 5th row and we should get rid of some escaped characters
+  df_data <- df_raw %>%
+    filter(row_number() %% 5 == 1) %>%
+    mutate(`Title, Artist` = str_replace_all(`Title, Artist`, "\n", ""))
 
   # split Title, Artist into title, artist and label based on gaps of 2 or more spaces
   df_final <- df_data %>% 
