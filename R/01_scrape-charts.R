@@ -30,7 +30,7 @@ scrape_chart <- function(date_of_chart) {
   # we need every 5th row and we should get rid of some escaped characters
   df_data <- df_raw %>%
     filter(row_number() %% 5 == 1) %>%
-    mutate(`Title, Artist` = str_replace_all(`Title, Artist`, "\n", ""))
+    mutate(`Title, Artist` = str_replace_all(`Title, Artist`, "(\n|\r)", ""))
 
   # split Title, Artist into title, artist and label based on gaps of 2 or more spaces
   df_final <- df_data %>% 
