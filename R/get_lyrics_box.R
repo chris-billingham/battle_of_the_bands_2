@@ -1,6 +1,7 @@
 library(tidyverse)
 library(rvest)
 library(curl)
+library(genius)
 
 # this is a faff but a function that'll scrape lyrics box
 # currently it uses google to find the link
@@ -21,6 +22,9 @@ get_lyrics_box <- function(artist, song) {
   # read the entire page for that google search
   ht <- read_html(url_fix)
   
+  # google requires a 5s delay
+  Sys.sleep(5)
+  
   # get all the links
   links <- ht %>% html_nodes(xpath='//a') %>% html_attr('href')
   
@@ -37,6 +41,9 @@ get_lyrics_box <- function(artist, song) {
   # curl and specify to ignore ssl verify
   raw_html <- curl_fetch_memory(top_link, 
                                 handle = curl::new_handle(ssl_verifypeer = FALSE))
+  
+  # lyricbox requires a 5 secod crawl delay
+  Sys.sleep(5)
   
   # read in the raw_html of what we need
   lyrics_ht <- read_html(rawToChar(raw_html$content))
